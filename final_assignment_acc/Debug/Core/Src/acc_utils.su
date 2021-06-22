@@ -1,0 +1,2 @@
+acc_utils.c:10:7:cal_roll	16	static
+acc_utils.c:22:7:cal_pitch	32	static
