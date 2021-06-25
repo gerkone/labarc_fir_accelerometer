@@ -20,6 +20,8 @@
 
 /* END FIR DEFINES*/
 
+/* FIR coefficients */
+const float32_t firCoeff[NUM_TAPS];
 /*FIR related variables*/
 float32_t firStateF32_x[BLOCK_SIZE + NUM_TAPS - 1];
 float32_t firStateF32_y[BLOCK_SIZE + NUM_TAPS - 1];

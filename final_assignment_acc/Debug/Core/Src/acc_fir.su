@@ -1,5 +1,5 @@
-acc_fir.c:8:6:init_fir_3_axes	120	static
-acc_fir.c:63:6:lpf_fir	8	static
-acc_fir.c:74:6:reset_out	0	static
-acc_fir.c:88:6:splice_column	4	static
-acc_fir.c:43:6:fir_3_axes	40	static
+acc_fir.c:19:6:init_fir_3_axes	24	static
+acc_fir.c:65:6:lpf_fir	8	static
+acc_fir.c:76:6:reset_out	0	static
+acc_fir.c:90:6:splice_column	4	static
+acc_fir.c:45:6:fir_3_axes	40	static

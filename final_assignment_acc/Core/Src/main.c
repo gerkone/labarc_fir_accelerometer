@@ -150,11 +150,12 @@ int main(void) {
 
 	// initialize 3 axis FIR
 	init_fir_3_axes();
+	led_off();
 
 	printf("Type s to start/stop streaming and d to toggle streaming mode...\r\n");
 	/* USER CODE END 2 */
 	stream_active = 1;
-	stream_mode = 0;
+	stream_mode = 1;
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
@@ -191,19 +192,19 @@ int main(void) {
 				if (idx == SIZE) {
 					// collected SIZE samples (stream freq / sample freq)
 					// run FIR on collected data, stream most current value
+					fir_3_axes(accData, &fir_out_x[0], &fir_out_y[0], &fir_out_z[0]);
 
-					fir_3_axes(accData, fir_out_x, fir_out_y, fir_out_z);
+					roll = cal_roll(fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
+					pitch = cal_pitch(fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
+					led_orientation(roll, pitch);
 
 					if (stream_mode == 0) {
 						// stream_mode = 0 -> stream acc data
-						printf("X: %8f\tY: %9f\tZ: %9f\r\n", fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
-						led_off();
+						printf("X: %d\tY: %d\tZ: %d\r\n", accData[SIZE - 1][0], accData[SIZE - 1][1], accData[SIZE - 1][2]);
+						printf("X: %9f\tY: %9f\tZ: %9f\r\n", fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
 					} else {
 						// stream_mode = 1 -> stream (roll, pitch) data
-						roll = cal_roll(fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
-						pitch = cal_pitch(fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
-						printf("ROLL: %8f\tPITCH: %9f\r\n", roll, pitch);
-						led_orientation(roll, pitch);
+						printf("ROLL: %10f\t\tPITCH: %10f\r\n", roll, pitch);
 					}
 
 					printf("------------------------------------------------------------\r\n");
@@ -282,29 +283,29 @@ void led_off() {
 void led_orientation(float32_t roll, float32_t pitch) {
 	// reset all leds
 	led_off();
-
 	unsigned int to_turn_on = -1;
-	if(roll > 0) {
+	// introduce tolerance - dead zone
+	if(roll > ACC_TOL) {
 		// front
 		to_turn_on = GPIO_PIN_13; //orange
-	} else {
+	} else if (roll < -ACC_TOL){
 		//back
 		to_turn_on = GPIO_PIN_15; // blue
 		roll = -roll;
 	}
-	if(pitch > 0) {
+	if(pitch > ACC_TOL) {
 		// may be sx
-		if(pitch > -roll) {
+		if(pitch > roll) {
 			to_turn_on = GPIO_PIN_12; //green
 		}
-	} else {
+	} else if (pitch < -ACC_TOL) {
 		// may be dx
-		if(-pitch > -roll) {
+		if(-pitch > roll) {
 			to_turn_on = GPIO_PIN_14; //red
 		}
 	}
 
-	// if pitc== o and roll == 0 no led turns on
+	// if pitch == 0 and roll == 0 no led turns on
 	if (to_turn_on != -1) {
 		// then set only the chosen one
 		LL_GPIO_SetOutputPin(GPIOD, to_turn_on);

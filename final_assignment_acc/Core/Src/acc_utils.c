@@ -8,7 +8,7 @@
  *
  */
 float cal_roll(float a_y, float a_z) {
-	return atan2(a_y, a_z) * 180.0;
+	return atan2(a_y, a_z) * 180.0 / M_PI;
 }
 
 /**
@@ -20,6 +20,6 @@ float cal_roll(float a_y, float a_z) {
  *
  */
 float cal_pitch(float a_x, float a_y, float a_z) {
-	return atan2(-a_x, sqrt(pow(a_y, 2) + pow(a_z, 2))) * 180.0;
+	return atan2(-a_x, sqrt(pow(a_y, 2) + pow(a_z, 2))) * 180.0 / M_PI;
 }
 

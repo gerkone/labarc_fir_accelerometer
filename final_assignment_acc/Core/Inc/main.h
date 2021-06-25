@@ -91,6 +91,7 @@ void Error_Handler(void);
 #define READ_PERIOD_MS     10 // 10ms because the assignment says 100Hz
 #define STREAM_PERIOD_MS  250 // 250ms because the assignment says 4Hz
 #define SIZE (STREAM_PERIOD_MS / READ_PERIOD_MS)
+#define ACC_TOL 2 // degrees of tolerance for roll and pitch - led
 
 
 /* USER CODE END Private defines */
