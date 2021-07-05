@@ -4,6 +4,8 @@
   * @brief          : Header for acc_fir.c file.
   *                   This file contains some a FIR custom definition for
   *                   accelerometer signal processing.
+  *                   references:
+  *                   https://www.keil.com/pack/doc/CMSIS/DSP/html/arm_fir_example_f32_8c-example.html
   ******************************************************************************
   */
 
@@ -43,6 +45,5 @@ void init_fir_3_axes();
 
 
 /* HELPERS */
-void splice_column(int16_t in[BLOCK_SIZE][3], float32_t *out, unsigned int col);
-void reset_out(float32_t *in);
+void exctract_column(int16_t in[BLOCK_SIZE][3], float32_t *out, unsigned int col);
 #endif

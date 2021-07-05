@@ -66,17 +66,21 @@ void Acc_Config(void);
 
 uint8_t chRX = 0;
 uint8_t dataReceived = 0;
+
 uint8_t stream_active = 0;
 uint8_t stream_mode = 0;
+
 uint8_t dataReady = 0;
 
 float32_t roll;
 float32_t pitch;
 
+// accData row counter
 uint16_t idx = 0;
+// matrix used by the accelerometer to store values
 int16_t accData[SIZE][3];
 
-// fir output data
+// fir output data arrays
 float32_t fir_out_x[SIZE];
 float32_t fir_out_y[SIZE];
 float32_t fir_out_z[SIZE];
@@ -138,6 +142,7 @@ int main(void) {
 	MX_SPI1_Init();
 	/* USER CODE BEGIN 2 */
 
+	// init systick
 	if (HAL_SYSTICK_Config(SystemCoreClock / (1000U / uwTickFreq)) > 0U) {
 		return HAL_ERROR;
 	}
@@ -150,17 +155,17 @@ int main(void) {
 
 	// initialize 3 axis FIR
 	init_fir_3_axes();
+	// reset all board LEDs
 	led_off();
 
 	printf("Type s to start/stop streaming and d to toggle streaming mode...\r\n");
 	/* USER CODE END 2 */
-	stream_active = 1;
-	stream_mode = 1;
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		if (dataReceived) {
 			if (chRX == 's') {
+				// toggle stream
 				stream_active = 1 - stream_active;
 				if (stream_active == 1) {
 					printf("Stream ON\r\n");
@@ -184,30 +189,37 @@ int main(void) {
 		}
 
 		if (stream_active) {
+			// wait for data, controlled by systick
 			if (dataReady) {
+				// read the 3 axes from the accelerometer and set it to the idx-th row in accData
 				LIS3DSH_ReadACC(accData[idx++]);
 				// set data ready after reading
 				// wait another 10ms before doing it again
 				dataReady = 0;
+				// data sample full (25 values), filtering and printing
 				if (idx == SIZE) {
 					// collected SIZE samples (stream freq / sample freq)
-					// run FIR on collected data, stream most current value
+					// run FIR on collected data
 					fir_3_axes(accData, &fir_out_x[0], &fir_out_y[0], &fir_out_z[0]);
 
-					roll = cal_roll(fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
+					roll = cal_roll(fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
 					pitch = cal_pitch(fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
+
+					// turn on lowest led
 					led_orientation(roll, pitch);
 
+					// stream most recent value
 					if (stream_mode == 0) {
 						// stream_mode = 0 -> stream acc data
-						printf("X: %d\tY: %d\tZ: %d\r\n", accData[SIZE - 1][0], accData[SIZE - 1][1], accData[SIZE - 1][2]);
-						printf("X: %9f\tY: %9f\tZ: %9f\r\n", fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
+						printf("X: %-9.4f\tY: %-9.4f\tZ: %-9.4f\r\n", fir_out_x[SIZE - 1], fir_out_y[SIZE - 1], fir_out_z[SIZE - 1]);
 					} else {
 						// stream_mode = 1 -> stream (roll, pitch) data
-						printf("ROLL: %10f\t\tPITCH: %10f\r\n", roll, pitch);
+						printf("ROLL: %-9.3f\t\tPITCH: %-9.3f\r\n", roll, pitch);
 					}
 
 					printf("------------------------------------------------------------\r\n");
+
+					// reset row counter
 					idx = 0;
 				}
 			}
@@ -294,18 +306,18 @@ void led_orientation(float32_t roll, float32_t pitch) {
 		roll = -roll;
 	}
 	if(pitch > ACC_TOL) {
-		// may be sx
+		// may be sx, check
 		if(pitch > roll) {
 			to_turn_on = GPIO_PIN_12; //green
 		}
 	} else if (pitch < -ACC_TOL) {
-		// may be dx
+		// may be dx, check
 		if(-pitch > roll) {
 			to_turn_on = GPIO_PIN_14; //red
 		}
 	}
 
-	// if pitch == 0 and roll == 0 no led turns on
+	// if pitch and roll are under the tolerance no led turns on
 	if (to_turn_on != -1) {
 		// then set only the chosen one
 		LL_GPIO_SetOutputPin(GPIOD, to_turn_on);

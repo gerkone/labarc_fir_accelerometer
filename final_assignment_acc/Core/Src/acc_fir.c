@@ -44,10 +44,12 @@ void init_fir_3_axes() {
  */
 void fir_3_axes(int16_t acc_data[BLOCK_SIZE][3], float32_t *output_samples_x, float32_t *output_samples_y, float32_t *output_samples_z) {
 
-	splice_column(acc_data, fir_in_x, 0);
-	splice_column(acc_data, fir_in_y, 1);
-	splice_column(acc_data, fir_in_z, 2);
+	// select the column of each axis
+	exctract_column(acc_data, fir_in_x, 0);
+	exctract_column(acc_data, fir_in_y, 1);
+	exctract_column(acc_data, fir_in_z, 2);
 
+	// call fir on each axes
 	lpf_fir(fir_in_x, output_samples_x, S_x);
 	lpf_fir(fir_in_y, output_samples_y, S_y);
 	lpf_fir(fir_in_z, output_samples_z, S_z);
@@ -68,18 +70,6 @@ void lpf_fir(float32_t *input_samples, float32_t *output_samples, arm_fir_instan
 	return;
 }
 
-/**
- * @brief Reset an array with zeros
- * @param[in]       *buffer to zero
- * @return 			none.
-*/
-void reset_out(float32_t *in) {
-	for(int i = 0; i < BLOCK_SIZE; i++) {
-		in[i] = 0;
-	}
-	return;
-}
-
 /*
  * @brief 			this function splices a column from a matrix and casts it to float.
  * @param[in]		input matrix
@@ -87,7 +77,7 @@ void reset_out(float32_t *in) {
  * @param[col] 		column to keep
  * @return 			none
  */
-void splice_column(int16_t in[BLOCK_SIZE][3], float32_t *out, unsigned int col) {
+void exctract_column(int16_t in[BLOCK_SIZE][3], float32_t *out, unsigned int col) {
 	for (int i = 0; i < BLOCK_SIZE; i++) {
 		out[i] = (float32_t) in[i][col];
 	}
